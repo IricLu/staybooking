@@ -1,16 +1,19 @@
 package com.example.staybooking.service;
 
+import com.example.staybooking.exception.StayDeleteException;
 import com.example.staybooking.exception.StayNotExistException;
-import com.example.staybooking.model.Stay;
-import com.example.staybooking.model.StayImage;
-import com.example.staybooking.model.User;
+import com.example.staybooking.model.*;
+import com.example.staybooking.repository.LocationRepository;
+import com.example.staybooking.repository.ReservationRepository;
 import com.example.staybooking.repository.StayRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.transaction.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
 
 @Service
 public class StayService {
@@ -18,11 +21,17 @@ public class StayService {
 
     private final ImageStorageService imageStorageService;
     private final StayRepository stayRepository;
+    private final GeoCodingService geoCodingService;
+    private final LocationRepository locationRepository;
+    private final ReservationRepository reservationRepository;
 
 
-    public StayService(ImageStorageService imageStorageService, StayRepository stayRepository) {
+    public StayService(ImageStorageService imageStorageService, StayRepository stayRepository, GeoCodingService geoCodingService, LocationRepository locationRepository, ReservationRepository reservationRepository) {
         this.imageStorageService = imageStorageService;
         this.stayRepository = stayRepository;
+        this.geoCodingService = geoCodingService;
+        this.locationRepository = locationRepository;
+        this.reservationRepository = reservationRepository;
     }
 
 
@@ -40,6 +49,7 @@ public class StayService {
     }
 
 
+    @Transactional
     public void add(Stay stay, MultipartFile[] images) {
         List<StayImage> stayImages = Arrays.stream(images)
                 .filter(image -> !image.isEmpty())
@@ -49,6 +59,10 @@ public class StayService {
                 .collect(Collectors.toList());
         stay.setImages(stayImages);
         stayRepository.save(stay);
+
+
+        Location location = geoCodingService.getLatLng(stay.getId(), stay.getAddress());
+        locationRepository.save(location);
     }
 
 
@@ -57,7 +71,12 @@ public class StayService {
         if (stay == null) {
             throw new StayNotExistException("Stay doesn't exist");
         }
+
+        List<Reservation> reservations = reservationRepository.findByStayAndCheckoutDateAfter(stay, LocalDate.now());
+        if (reservations != null && !reservations.isEmpty()) {
+            throw new StayDeleteException("There are active reservations for this place");
+        }
+
         stayRepository.deleteById(stayId);
     }
 }
-
