@@ -24,13 +24,11 @@ public class ReservationService {
     }
 
     public List<Reservation> listByGuest(String username) {
-        //return reservationRepository.findByGuest_Username(username);
-        return reservationRepository.findByGuest(new User.Builder().setUsername(username).build());
+        return reservationRepository.findByGuest_Username(username);
     }
 
     public List<Reservation> listByStay(Long stayId) {
-        //return reservationRepository.findByStay_Id(stayId);
-        return reservationRepository.findByStay(new Stay.Builder().setId(stayId).build());
+        return reservationRepository.findByStay_Id(stayId);
     }
 
     @Transactional

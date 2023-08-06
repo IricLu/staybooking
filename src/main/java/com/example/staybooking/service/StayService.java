@@ -36,12 +36,12 @@ public class StayService {
 
 
     public List<Stay> listByUser(String username) {
-        return stayRepository.findByHost(new User.Builder().setUsername(username).build());
+        return stayRepository.findByHost_Username(username);
     }
 
 
     public Stay findByIdAndHost(Long stayId, String username) throws StayNotExistException {
-        Stay stay = stayRepository.findByIdAndHost(stayId, new User.Builder().setUsername(username).build());
+        Stay stay = stayRepository.findByIdAndHost_Username(stayId, username);
         if (stay == null) {
             throw new StayNotExistException("Stay doesn't exist");
         }
@@ -67,7 +67,7 @@ public class StayService {
 
 
     public void delete(Long stayId, String username) throws StayNotExistException {
-        Stay stay = stayRepository.findByIdAndHost(stayId, new User.Builder().setUsername(username).build());
+        Stay stay = stayRepository.findByIdAndHost_Username(stayId, username);
         if (stay == null) {
             throw new StayNotExistException("Stay doesn't exist");
         }
